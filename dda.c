@@ -86,6 +86,9 @@ void dda_new_startpoint(void) {
 void dda_create(DDA *dda, TARGET *target) {
 	uint32_t	steps, x_delta_um, y_delta_um, z_delta_um, e_delta_um;
 	uint32_t	distance, c_limit, c_limit_calc;
+  #ifdef ACCELERATION_RAMPING
+  dda->lead = X;						// Used to keep track of the leading axis (= axis with most steps)
+  #endif
   #ifdef LOOKAHEAD
   // Number the moves to identify them; allowed to overflow.
   static uint8_t idcnt = 0;
@@ -169,12 +172,24 @@ void dda_create(DDA *dda, TARGET *target) {
                target->Z - startpoint.Z, target->E - startpoint.E);
 
 	dda->total_steps = dda->x_delta;
-	if (dda->y_delta > dda->total_steps)
+	if (dda->y_delta > dda->total_steps) {
 		dda->total_steps = dda->y_delta;
-	if (dda->z_delta > dda->total_steps)
+		#ifdef ACCELERATION_RAMPING
+		dda->lead = Y;
+		#endif
+	}
+	if (dda->z_delta > dda->total_steps) {
 		dda->total_steps = dda->z_delta;
-	if (dda->e_delta > dda->total_steps)
+		#ifdef ACCELERATION_RAMPING
+		dda->lead = Z;
+		#endif
+	}
+	if (dda->e_delta > dda->total_steps) {
 		dda->total_steps = dda->e_delta;
+		#ifdef ACCELERATION_RAMPING
+		dda->lead = E;
+		#endif
+	}
 
 	if (DEBUG_DDA && (debug_flags & DEBUG_DDA))
     sersendf_P(PSTR(" [ts:%lu"), dda->total_steps);
@@ -503,6 +518,18 @@ void dda_step(DDA *dda) {
 			x_step();
 			move_state.x_steps--;
 			move_state.x_counter += dda->total_steps;
+
+#if (defined X_MIN_PIN || defined X_MAX_PIN) && defined ENDSTOP_ALWAYS_CHECK
+			// Check if we want to search for the end stops, if not and they are toggled do an emergency stop
+			if ((dda->endstop_check & 0x1) == 0) {
+#if defined X_MIN_PIN
+				if (x_min() == 1) dda_emergency_shutdown(PSTR("x-axis min end stop triggered"));
+#endif
+#if defined X_MAX_PIN
+				if (x_max() == 1) dda_emergency_shutdown(PSTR("x-axis max end stop triggered"));
+#endif
+			}
+#endif
 		}
 	}
 #else	// ACCELERATION_TEMPORAL
@@ -511,6 +538,18 @@ void dda_step(DDA *dda) {
 		move_state.x_steps--;
 		move_state.x_time += dda->x_step_interval;
 		move_state.all_time = move_state.x_time;
+
+#if (defined X_MIN_PIN || defined X_MAX_PIN) && defined ENDSTOP_ALWAYS_CHECK
+		// Check if we want to search for the end stops, if not and they are toggled do an emergency stop
+		if ((dda->endstop_check & 0x1) == 0) {
+#if defined X_MIN_PIN
+			if (x_min() == 1) dda_emergency_shutdown(PSTR("x-axis min end stop triggered"));
+#endif
+#if defined X_MAX_PIN
+			if (x_max() == 1) dda_emergency_shutdown(PSTR("x-axis max end stop triggered"));
+#endif
+		}
+#endif
 	}
 #endif
 
@@ -521,6 +560,18 @@ void dda_step(DDA *dda) {
 			y_step();
 			move_state.y_steps--;
 			move_state.y_counter += dda->total_steps;
+
+#if (defined Y_MIN_PIN || defined Y_MAX_PIN) && defined ENDSTOP_ALWAYS_CHECK
+			// Check if we want to search for the end stops, if not and they are toggled do an emergency stop
+			if ((dda->endstop_check & 0x2) == 0) {
+#if defined Y_MIN_PIN
+				if (y_min() == 1) dda_emergency_shutdown(PSTR("y-axis min end stop triggered"));
+#endif
+#if defined Y_MAX_PIN
+				if (y_max() == 1) dda_emergency_shutdown(PSTR("y-axis max end stop triggered"));
+#endif
+			}
+#endif
 		}
 	}
 #else	// ACCELERATION_TEMPORAL
@@ -529,6 +580,18 @@ void dda_step(DDA *dda) {
 		move_state.y_steps--;
 		move_state.y_time += dda->y_step_interval;
 		move_state.all_time = move_state.y_time;
+
+#if (defined Y_MIN_PIN || defined Y_MAX_PIN) && defined ENDSTOP_ALWAYS_CHECK
+		// Check if we want to search for the end stops, if not and they are toggled do an emergency stop
+		if ((dda->endstop_check & 0x2) == 0) {
+#if defined Y_MIN_PIN
+			if (y_min() == 1) dda_emergency_shutdown(PSTR("y-axis min end stop triggered"));
+#endif
+#if defined Y_MAX_PIN
+			if (y_max() == 1) dda_emergency_shutdown(PSTR("y-axis max end stop triggered"));
+#endif
+		}
+#endif
 	}
 #endif
 
@@ -539,6 +602,18 @@ void dda_step(DDA *dda) {
 			z_step();
 			move_state.z_steps--;
 			move_state.z_counter += dda->total_steps;
+
+#if (defined Z_MIN_PIN || defined Z_MAX_PIN) && defined ENDSTOP_ALWAYS_CHECK
+			// Check if we want to search for the end stops, if not and they are toggled do an emergency stop
+			if ((dda->endstop_check & 0x4) == 0) {
+#if defined Z_MIN_PIN
+				if (z_min() == 1) dda_emergency_shutdown(PSTR("z-axis min end stop triggered"));
+#endif
+#if defined Z_MAX_PIN
+				if (z_max() == 1) dda_emergency_shutdown(PSTR("z-axis max end stop triggered"));
+#endif
+			}
+#endif
 		}
 	}
 #else	// ACCELERATION_TEMPORAL
@@ -547,6 +622,18 @@ void dda_step(DDA *dda) {
 		move_state.z_steps--;
 		move_state.z_time += dda->z_step_interval;
 		move_state.all_time = move_state.z_time;
+
+#if (defined Z_MIN_PIN || defined Z_MAX_PIN) && defined ENDSTOP_ALWAYS_CHECK
+		// Check if we want to search for the end stops, if not and they are toggled do an emergency stop
+		if ((dda->endstop_check & 0x4) == 0) {
+#if defined Z_MIN_PIN
+			if (z_min() == 1) dda_emergency_shutdown(PSTR("z-axis min end stop triggered"));
+#endif
+#if defined Z_MAX_PIN
+			if (z_max() == 1) dda_emergency_shutdown(PSTR("z-axis max end stop triggered"));
+#endif
+		}
+#endif
 	}
 #endif
 
