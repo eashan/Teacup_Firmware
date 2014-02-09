@@ -346,7 +346,7 @@ void heater_tick(heater_t h, temp_type_t type, uint16_t current_temp, uint16_t t
 		else if (heaters_runtime[h].heater_i < -heaters_pid[h].i_limit)
 			heaters_runtime[h].heater_i = -heaters_pid[h].i_limit;
 
-		// derivative
+		// derivative: dT/dt as C/4 per (TH_COUNT*s/4)
 		// note: D follows temp rather than error so there's no large derivative when the target changes
 		heater_d = heaters_runtime[h].temp_history[heaters_runtime[h].temp_history_pointer] - current_temp;
 
