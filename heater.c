@@ -76,12 +76,12 @@ struct {
 	#define HEATER_THRESHOLD 8
 #endif
 
-/// default scaled P factor, equivalent to 8.0
-#define		DEFAULT_P				8192
-/// default scaled I factor, equivalent to 0.5
-#define		DEFAULT_I				512
-/// default scaled D factor, equivalent to 24
-#define		DEFAULT_D				24576
+/// default scaled P factor, equivalent to 32.0 counts/C
+#define		DEFAULT_P				(8192*4)
+/// default scaled I factor, equivalent to 8 counts/(Cs) 
+#define		DEFAULT_I				(512*16)
+/// default scaled D factor, equivalent to 24*TH_COUNT  counts/(C/s)
+#define		DEFAULT_D				(24576*TH_COUNT)
 /// default scaled I limit
 #define		DEFAULT_I_LIMIT	384
 
