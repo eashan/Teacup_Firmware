@@ -322,9 +322,9 @@ void heater_tick(heater_t h, temp_type_t type, uint16_t current_temp, uint16_t t
 		// combine factors
 		int32_t pid_output_intermed = (
 			(
-				(((int32_t) heater_p) * heaters_pid[h].p_factor) +                    //     4*qC * kP
-				(((int32_t) heaters_runtime[h].heater_i) * heaters_pid[h].i_factor) + // 16*qC*qs * kI
-				(((int32_t) heater_d) * heaters_pid[h].d_factor)               // TH_COUNT *qC/qs * kD
+				(((int32_t) heater_p) * heaters_pid[h].p_factor)/4 +                      //   C * kP
+				(((int32_t) heaters_runtime[h].heater_i) * heaters_pid[h].i_factor)/16 +  // C*s * kI
+				(((int32_t) heater_d) * heaters_pid[h].d_factor)/TH_COUNT                 // C/s * kD
 			) / PID_SCALE
 		);
 
