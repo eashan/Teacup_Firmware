@@ -305,26 +305,26 @@ void heater_tick(heater_t h, temp_type_t type, uint16_t current_temp, uint16_t t
 
 		// PID stuff
 		// proportional
-		heater_p = t_error;
+		heater_p = t_error;   //  units: 1C=4qC
 
 		// integral
-		heaters_runtime[h].heater_i += t_error;
+		heaters_runtime[h].heater_i += t_error;  // units: 1C*s=16qC*qs
 		// prevent integrator wind-up
 		if (heaters_runtime[h].heater_i > heaters_pid[h].i_limit)
 			heaters_runtime[h].heater_i = heaters_pid[h].i_limit;
 		else if (heaters_runtime[h].heater_i < -heaters_pid[h].i_limit)
 			heaters_runtime[h].heater_i = -heaters_pid[h].i_limit;
 
-		// derivative
+		// derivative // units: 1C/s=TH_COUNT*4qC/4qs=8qC/qs
 		// note: D follows temp rather than error so there's no large derivative when the target changes
 		heater_d = heaters_runtime[h].temp_history[heaters_runtime[h].temp_history_pointer] - current_temp;
 
 		// combine factors
 		int32_t pid_output_intermed = (
 			(
-				(((int32_t) heater_p) * heaters_pid[h].p_factor) +
-				(((int32_t) heaters_runtime[h].heater_i) * heaters_pid[h].i_factor) +
-				(((int32_t) heater_d) * heaters_pid[h].d_factor)
+				(((int32_t) heater_p) * heaters_pid[h].p_factor) +                    //     4*qC * kP
+				(((int32_t) heaters_runtime[h].heater_i) * heaters_pid[h].i_factor) + // 16*qC*qs * kI
+				(((int32_t) heater_d) * heaters_pid[h].d_factor)               // TH_COUNT *qC/qs * kD
 			) / PID_SCALE
 		);
 
